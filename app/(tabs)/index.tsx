@@ -48,8 +48,12 @@ export default function HomeScreen() {
                     <View style={styles.companionWrapper}>
                         <Companion mood="calm" size={width * 0.6} />
                     </View>
-                    <Text style={styles.greeting}>Welcome back</Text>
-                    <Text style={styles.subGreeting}>Take a moment to breathe</Text>
+
+                    <View style={styles.moodContainer}>
+                        <Text style={styles.moodLabel}>Calm</Text>
+                        <Text style={styles.moodScore}>75</Text>
+                        <Text style={styles.moodHint}>Tap for details</Text>
+                    </View>
                 </View>
 
                 {/* Middle Section: Actions */}
@@ -59,7 +63,7 @@ export default function HomeScreen() {
                         onPress={() => router.push('/(screens)/focus')}
                         activeOpacity={0.9}
                     >
-                        <Text style={[styles.actionButtonText, { color: '#FFF' }]}>Start Focus Session</Text>
+                        <Text style={[styles.actionButtonText, { color: '#FFF' }]}>Start Focus </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -67,7 +71,7 @@ export default function HomeScreen() {
                         onPress={() => router.push('/(screens)/timeline')}
                         activeOpacity={0.9}
                     >
-                        <Text style={[styles.actionButtonText, { color: '#000' }]}>Snooze Something</Text>
+                        <Text style={[styles.actionButtonText, { color: '#000' }]}>Snooze Apps </Text>
                     </TouchableOpacity>
                 </View>
 
@@ -129,17 +133,36 @@ const styles = StyleSheet.create({
     subGreeting: {
         ...Typography.bodyRegular,
         color: Colors.text.tertiary,
+        marginBottom: Spacing.l,
+    },
+    moodContainer: {
+        alignItems: 'center',
+        gap: Spacing.xs,
+    },
+    moodLabel: {
+        ...Typography.h3,
+        color: Colors.mood.calm,
+    },
+    moodScore: {
+        fontSize: 48,
+        fontWeight: '300',
+        color: Colors.text.primary,
+        fontVariant: ['tabular-nums'],
+    },
+    moodHint: {
+        ...Typography.caption,
+        color: Colors.text.tertiary,
+        opacity: 0.8,
     },
     actionSection: {
-        paddingHorizontal: Spacing.l,
+        paddingHorizontal: Spacing.xl,
         gap: Spacing.m,
         marginBottom: Spacing.xl,
         flexDirection: 'row',
-        justifyContent: "center",
-        alignItems: "center",
-
+        justifyContent: 'center',
     },
     actionButton: {
+        flex: 1,
         height: 56,
         borderRadius: BorderRadius.l,
         alignItems: 'center',
@@ -150,8 +173,6 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
         padding: Spacing.m,
-
-
     },
     actionButtonText: {
         fontSize: 18,
