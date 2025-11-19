@@ -1,98 +1,208 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Companion } from '@/components/Companion';
+import { Colors } from '@/constants/Colors';
+import { BorderRadius, Spacing } from '@/constants/Spacing';
+import { Typography } from '@/constants/Typography';
+import { useRouter } from 'expo-router';
+import { Clock, Moon, Zap } from 'lucide-react-native';
+import React from 'react';
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    const router = useRouter();
+    const insets = useSafeAreaInsets();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+    // Mock Data (Will be replaced with Store data later)
+    const stats = [
+        {
+            id: 'focus',
+            label: "Focus Time",
+            value: "45m",
+            icon: <Zap size={20} color={Colors.primary} />,
+            trend: "+12%"
+        },
+        {
+            id: 'screen',
+            label: "Screen Time",
+            value: "2h 10m",
+            icon: <Clock size={20} color={Colors.secondary} />,
+            trend: "-5%"
+        },
+        {
+            id: 'adherence',
+            label: "Snooze Success",
+            value: "85%",
+            icon: <Moon size={20} color={Colors.mood.proud} />,
+            trend: "+2%"
+        },
+    ];
+
+    return (
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
+                {/* Top Section: Companion */}
+                <View style={styles.topSection}>
+                    <View style={styles.companionWrapper}>
+                        <Companion mood="calm" size={width * 0.6} />
+                    </View>
+                    <Text style={styles.greeting}>Welcome back</Text>
+                    <Text style={styles.subGreeting}>Take a moment to breathe</Text>
+                </View>
+
+                {/* Middle Section: Actions */}
+                <View style={styles.actionSection}>
+                    <TouchableOpacity
+                        style={[styles.actionButton, { backgroundColor: Colors.primary }]}
+                        onPress={() => router.push('/(screens)/focus')}
+                        activeOpacity={0.9}
+                    >
+                        <Text style={[styles.actionButtonText, { color: '#FFF' }]}>Start Focus Session</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionButton, { backgroundColor: Colors.secondary }]}
+                        onPress={() => router.push('/(screens)/timeline')}
+                        activeOpacity={0.9}
+                    >
+                        <Text style={[styles.actionButtonText, { color: '#000' }]}>Snooze Something</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Bottom Section: Stats */}
+                <View style={styles.statsSection}>
+                    <Text style={styles.sectionTitle}>Today's Overview</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.statsScroll}
+                    >
+                        {stats.map((stat) => (
+                            <View key={stat.id} style={styles.statCard}>
+                                <View style={styles.statHeader}>
+                                    <View style={styles.iconContainer}>
+                                        {stat.icon}
+                                    </View>
+                                    <Text style={[
+                                        styles.trendText,
+                                        { color: stat.trend.startsWith('+') ? Colors.success : Colors.warning }
+                                    ]}>
+                                        {stat.trend}
+                                    </Text>
+                                </View>
+                                <Text style={styles.statValue}>{stat.value}</Text>
+                                <Text style={styles.statLabel}>{stat.label}</Text>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </View>
+
+            </ScrollView>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: Colors.background,
+    },
+    scrollContent: {
+        paddingBottom: Spacing.xl,
+    },
+    topSection: {
+        alignItems: 'center',
+        paddingVertical: Spacing.xl,
+        minHeight: 400,
+        justifyContent: 'center',
+    },
+    companionWrapper: {
+        marginBottom: Spacing.l,
+    },
+    greeting: {
+        ...Typography.h2,
+        color: Colors.text.primary,
+        marginBottom: Spacing.xs,
+    },
+    subGreeting: {
+        ...Typography.bodyRegular,
+        color: Colors.text.tertiary,
+    },
+    actionSection: {
+        paddingHorizontal: Spacing.l,
+        gap: Spacing.m,
+        marginBottom: Spacing.xl,
+        flexDirection: 'row',
+        justifyContent: "center",
+        alignItems: "center",
+
+    },
+    actionButton: {
+        height: 56,
+        borderRadius: BorderRadius.l,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
+        padding: Spacing.m,
+
+
+    },
+    actionButtonText: {
+        fontSize: 18,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+    },
+    statsSection: {
+        paddingLeft: Spacing.l,
+    },
+    sectionTitle: {
+        ...Typography.h4,
+        color: Colors.text.secondary,
+        marginBottom: Spacing.m,
+    },
+    statsScroll: {
+        paddingRight: Spacing.l,
+        gap: Spacing.m,
+    },
+    statCard: {
+        width: 150,
+        padding: Spacing.m,
+        backgroundColor: Colors.surface,
+        borderRadius: BorderRadius.l,
+        borderWidth: 1,
+        borderColor: Colors.border,
+    },
+    statHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.m,
+    },
+    iconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: Colors.surfaceHighlight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    trendText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    statValue: {
+        ...Typography.h3,
+        color: Colors.text.primary,
+        marginBottom: 4,
+    },
+    statLabel: {
+        fontSize: 13,
+        color: Colors.text.secondary,
+    },
 });

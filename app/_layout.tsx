@@ -1,24 +1,33 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { useOnboardingStore } from "@/store/onboardingStore";
+import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { hasCompletedOnboarding } = useOnboardingStore();
+  const segments = useSegments();
+  const router = useRouter();
+
+  const rootNavigationState = useRootNavigationState();
+
+  // useEffect(() => {
+  //   if (!rootNavigationState?.key) return;
+
+  //   const inOnboarding = segments[0] === 'onboarding';
+
+  //   if (!hasCompletedOnboarding && !inOnboarding) {
+  //     router.replace('/onboarding');
+  //   } else if (hasCompletedOnboarding && inOnboarding) {
+  //     router.replace('/(tabs)');
+  //   }
+  // }, [hasCompletedOnboarding, segments, rootNavigationState?.key]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      <StatusBar style="light" />
+    </>
   );
 }

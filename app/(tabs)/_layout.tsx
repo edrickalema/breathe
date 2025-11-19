@@ -1,35 +1,56 @@
+import { Colors } from '@/constants/Colors';
 import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BarChart2, Home, Settings } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+    return (
+        <Tabs
+            screenOptions={{
+                headerShown: false,
+                tabBarStyle: {
+                    backgroundColor: Colors.surface,
+                    borderTopColor: Colors.border,
+                    height: 80,
+                    paddingBottom: 8,
+                    paddingTop: 8,
+                },
+                tabBarActiveTintColor: Colors.primary,
+                tabBarInactiveTintColor: Colors.text.tertiary,
+                tabBarLabelStyle: {
+                    fontSize: 12,
+                    fontWeight: '500',
+                },
+            }}>
+            <Tabs.Screen
+                name="index"
+                options={{
+                    title: 'Home',
+                    tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+                }}
+            />
+            {/* <Tabs.Screen
+                name="timeline"
+                options={{
+                    title: 'Timeline',
+                    tabBarIcon: ({ color, size }) => <Clock color={color} size={size} />,
+                }}
+            /> */}
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
-  );
+            <Tabs.Screen
+                name="insights"
+                options={{
+                    title: 'Insights',
+                    tabBarIcon: ({ color, size }) => <BarChart2 color={color} size={size} />,
+                }}
+            />
+
+            <Tabs.Screen
+                name="settings"
+                options={{
+                    title: 'Settings',
+                    tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
+                }}
+            />
+        </Tabs>
+    );
 }
