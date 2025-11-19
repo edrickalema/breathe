@@ -1,9 +1,10 @@
 import { Colors } from '@/constants/Colors';
 import { BorderRadius, Spacing } from '@/constants/Spacing';
 import { Typography } from '@/constants/Typography';
-import { Clock, Edit2, Trash2 } from 'lucide-react-native';
+import { Check, Clock, Edit2, Trash2 } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 
 interface TimelineCardProps {
@@ -26,58 +27,86 @@ export function TimelineCard({
     countdown,
     onEdit,
     onDelete,
+    onComplete,
     index = 0,
 }: TimelineCardProps) {
+    const renderRightActions = () => {
+        if (!onDelete) return null;
+        return (
+            <TouchableOpacity style={styles.deleteAction} onPress={onDelete}>
+                <Trash2 size={24} color="#FFF" />
+            </TouchableOpacity>
+        );
+    };
+
+    const renderLeftActions = () => {
+        if (!onComplete) return null;
+        return (
+            <TouchableOpacity style={styles.completeAction} onPress={onComplete}>
+                <Check size={24} color="#FFF" />
+            </TouchableOpacity>
+        );
+    };
+
     return (
         <Animated.View
             entering={FadeInRight.delay(index * 100)}
-            style={styles.card}
+            style={styles.container}
         >
-            {/* Icon */}
-            <View style={styles.iconContainer}>
-                <Text style={styles.icon}>{icon}</Text>
-            </View>
+            <Swipeable
+                renderRightActions={renderRightActions}
+                renderLeftActions={renderLeftActions}
+                containerStyle={styles.swipeContainer}
+            >
+                <View style={styles.card}>
+                    {/* Icon */}
+                    <View style={styles.iconContainer}>
+                        <Text style={styles.icon}>{icon}</Text>
+                    </View>
 
-            {/* Content */}
-            <View style={styles.content}>
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.returnTime}>{returnTime}</Text>
-                {reason && (
-                    <Text style={styles.reason}>"{reason}"</Text>
-                )}
-                <View style={styles.countdownRow}>
-                    <Clock size={14} color={Colors.text.tertiary} />
-                    <Text style={styles.countdown}>{countdown}</Text>
+                    {/* Content */}
+                    <View style={styles.content}>
+                        <Text style={styles.title}>{title}</Text>
+                        <Text style={styles.returnTime}>{returnTime}</Text>
+                        {reason && (
+                            <Text style={styles.reason}>"{reason}"</Text>
+                        )}
+                        <View style={styles.countdownRow}>
+                            <Clock size={14} color={Colors.text.tertiary} />
+                            <Text style={styles.countdown}>{countdown}</Text>
+                        </View>
+                    </View>
+
+                    {/* Actions (Still kept for accessibility/visibility) */}
+                    <View style={styles.actions}>
+                        {onEdit && (
+                            <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
+                                <Edit2 size={18} color={Colors.text.secondary} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
-            </View>
-
-            {/* Actions */}
-            <View style={styles.actions}>
-                {onEdit && (
-                    <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
-                        <Edit2 size={18} color={Colors.text.secondary} />
-                    </TouchableOpacity>
-                )}
-                {onDelete && (
-                    <TouchableOpacity onPress={onDelete} style={styles.actionButton}>
-                        <Trash2 size={18} color={Colors.danger} />
-                    </TouchableOpacity>
-                )}
-            </View>
+            </Swipeable>
         </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
+    container: {
+        marginBottom: Spacing.m,
+    },
+    swipeContainer: {
+        borderRadius: BorderRadius.l,
+        overflow: 'hidden',
+    },
     card: {
         flexDirection: 'row',
         backgroundColor: Colors.surface,
-        borderRadius: BorderRadius.l,
         padding: Spacing.m,
-        marginBottom: Spacing.m,
+        alignItems: 'center',
         borderWidth: 1,
         borderColor: Colors.border,
-        alignItems: 'center',
+        borderRadius: BorderRadius.l, // Ensure card itself has radius
     },
     iconContainer: {
         width: 48,
@@ -127,5 +156,19 @@ const styles = StyleSheet.create({
     },
     actionButton: {
         padding: Spacing.xs,
+    },
+    deleteAction: {
+        backgroundColor: Colors.danger,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 80,
+        height: '100%',
+    },
+    completeAction: {
+        backgroundColor: Colors.success,
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 80,
+        height: '100%',
     },
 });

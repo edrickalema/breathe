@@ -1,8 +1,12 @@
+import { InterventionOverlay } from '@/components/deferred/InterventionOverlay';
+import { SnoozeModal } from '@/components/deferred/SnoozeModal';
 import { NowMarker } from '@/components/timeline/NowMarker';
 import { TimelineCard } from '@/components/timeline/TimelineCard';
 import { Colors } from '@/constants/Colors';
 import { BorderRadius, Spacing } from '@/constants/Spacing';
 import { Typography } from '@/constants/Typography';
+import { useDeferredLifecycle } from '@/hooks/useDeferredLifecycle';
+import { useDeferredStore } from '@/store/deferredStore';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Calendar } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -13,60 +17,90 @@ export default function TimelineScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const [refreshing, setRefreshing] = useState(false);
+    const [isSnoozeModalVisible, setSnoozeModalVisible] = useState(false);
+    const [interventionItem, setInterventionItem] = useState<string | null>(null);
 
-    // Mock data - will be replaced with store data
-    const upcomingItems = [
-        {
-            id: '1',
-            icon: '📷',
-            title: 'Instagram',
-            returnTime: 'Today at 8:00 PM',
-            reason: 'Want evening relaxation not afternoon distraction',
-            countdown: 'Returns in 3h 24m',
-        },
-        {
-            id: '2',
-            icon: '🐦',
-            title: 'Twitter',
-            returnTime: 'Tomorrow at 9:00 AM',
-            reason: 'Check news in the morning only',
-            countdown: 'Returns in 18h 45m',
-        },
-    ];
+    // Use the store
+    const { items, history, deleteItem, completeItem, updateItem, checkReadyItems } = useDeferredStore();
 
-    const completedItems = [
-        {
-            id: '3',
-            icon: '📧',
-            title: 'Email',
-            returnTime: 'Today at 2:00 PM',
-            reason: 'Focus on deep work first',
-            countdown: 'Completed',
-        },
-    ];
+    // Activate lifecycle hook
+    useDeferredLifecycle();
+
+    const upcomingItems = items.filter(i => i.status === 'waiting' || i.status === 'ready');
+    const completedItems = history;
 
     const onRefresh = () => {
         setRefreshing(true);
-        // Simulate refresh
-        setTimeout(() => setRefreshing(false), 1000);
+        checkReadyItems();
+        setTimeout(() => setRefreshing(false), 500);
     };
 
     const handleEdit = (id: string) => {
         console.log('Edit item:', id);
+        // TODO: Implement edit modal if needed, or reuse SnoozeModal
     };
 
-    const handleDelete = (id: string) => {
-        console.log('Delete item:', id);
+    const handleDelete = async (id: string) => {
+        await deleteItem(id);
+    };
+
+    const handleComplete = async (id: string) => {
+        await completeItem(id);
+    };
+
+    const handleItemPress = (id: string) => {
+        const item = items.find(i => i.id === id);
+        if (!item) return;
+
+        if (item.status === 'ready') {
+            // If ready, just complete it or open it (simulated)
+            // For now, let's just complete it to show flow
+            // In real app, this might open the deep link
+            console.log('Opening ready item:', item.title);
+        } else {
+            // If not ready, show intervention
+            setInterventionItem(id);
+        }
+    };
+
+    const handleInterventionOpen = async () => {
+        if (interventionItem) {
+            // Log early access (TODO in store)
+            console.log('Early access for:', interventionItem);
+            setInterventionItem(null);
+        }
+    };
+
+    const handleInterventionExtend = async () => {
+        if (interventionItem) {
+            const item = items.find(i => i.id === interventionItem);
+            if (item) {
+                await updateItem(interventionItem, {
+                    returnTime: item.returnTime + 15 * 60 * 1000 // +15 mins
+                });
+            }
+            setInterventionItem(null);
+        }
+    };
+
+    const getCountdownString = (returnTime: number, status: string) => {
+        if (status === 'ready') return 'Ready now!';
+        const diff = Math.max(0, returnTime - Date.now());
+        const hours = Math.floor(diff / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        if (hours > 0) return `Returns in ${hours}h ${minutes}m`;
+        return `Returns in ${minutes}m`;
     };
 
     const isEmpty = upcomingItems.length === 0 && completedItems.length === 0;
+    const activeInterventionItem = items.find(i => i.id === interventionItem);
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
-                    <ArrowLeft size={24} />
+                    <ArrowLeft size={24} color={Colors.text.primary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Timeline</Text>
             </View>
@@ -92,7 +126,7 @@ export default function TimelineScreen() {
                         </Text>
                         <TouchableOpacity
                             style={styles.emptyButton}
-                            onPress={() => console.log('Snooze something')}
+                            onPress={() => setSnoozeModalVisible(true)}
                         >
                             <Text style={styles.emptyButtonText}>Snooze Something</Text>
                         </TouchableOpacity>
@@ -104,17 +138,23 @@ export default function TimelineScreen() {
                             <View style={styles.section}>
                                 <Text style={styles.sectionTitle}>Returning Soon</Text>
                                 {upcomingItems.map((item, index) => (
-                                    <TimelineCard
+                                    <TouchableOpacity
                                         key={item.id}
-                                        icon={item.icon}
-                                        title={item.title}
-                                        returnTime={item.returnTime}
-                                        reason={item.reason}
-                                        countdown={item.countdown}
-                                        onEdit={() => handleEdit(item.id)}
-                                        onDelete={() => handleDelete(item.id)}
-                                        index={index}
-                                    />
+                                        onPress={() => handleItemPress(item.id)}
+                                        activeOpacity={0.9}
+                                    >
+                                        <TimelineCard
+                                            icon={item.icon}
+                                            title={item.title}
+                                            returnTime={new Date(item.returnTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            reason={item.reason}
+                                            countdown={getCountdownString(item.returnTime, item.status)}
+                                            onEdit={() => handleEdit(item.id)}
+                                            onDelete={() => handleDelete(item.id)}
+                                            onComplete={() => handleComplete(item.id)}
+                                            index={index}
+                                        />
+                                    </TouchableOpacity>
                                 ))}
                             </View>
                         )}
@@ -133,10 +173,11 @@ export default function TimelineScreen() {
                                         key={item.id}
                                         icon={item.icon}
                                         title={item.title}
-                                        returnTime={item.returnTime}
+                                        returnTime={new Date(item.returnTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         reason={item.reason}
-                                        countdown={item.countdown}
+                                        countdown="Completed"
                                         index={index}
+                                        onDelete={() => handleDelete(item.id)}
                                     />
                                 ))}
                             </View>
@@ -148,10 +189,28 @@ export default function TimelineScreen() {
             {/* Floating Add Button */}
             <TouchableOpacity
                 style={styles.fab}
-                onPress={() => console.log('Add new snooze')}
+                onPress={() => setSnoozeModalVisible(true)}
             >
                 <Calendar size={24} color="#FFF" />
             </TouchableOpacity>
+
+            {/* Modals */}
+            <SnoozeModal
+                visible={isSnoozeModalVisible}
+                onClose={() => setSnoozeModalVisible(false)}
+            />
+
+            {activeInterventionItem && (
+                <InterventionOverlay
+                    visible={!!interventionItem}
+                    itemName={activeInterventionItem.title}
+                    returnTime={activeInterventionItem.returnTime}
+                    reason={activeInterventionItem.reason}
+                    onOpenAnyway={handleInterventionOpen}
+                    onExtendSnooze={handleInterventionExtend}
+                    onCancel={() => setInterventionItem(null)}
+                />
+            )}
         </View>
     );
 }
@@ -168,7 +227,7 @@ const styles = StyleSheet.create({
         borderBottomColor: Colors.border,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        gap: Spacing.m,
     },
     headerTitle: {
         ...Typography.h2,
